@@ -112,7 +112,7 @@ def run_ingestion(csv_path: str | None = None, db: Session | None = None) -> dic
     try:
         _emit_system_event(db, "pipeline_started", {"csv_path": csv_path, "started_at": started_at.isoformat()}, job_id)
 
-        with open(csv_path, newline="", encoding="utf-8") as f:
+        with open(csv_path, newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             batch: list[dict] = []
             BATCH_SIZE = 500
