@@ -1,24 +1,24 @@
-# Decisiones Arquitectónicas (NexusIQ)
+# Decisiones de Arquitectura (NexusIQ)
 
-Al diseñar esta prueba técnica orientada a un log inmutable para Digital Twins, se tomaron tres decisiones arquitectónicas cruciales para garantizar escalabilidad funcional, consistencia y robustez en un escenario de mantenimiento predictivo.
+Para construir un sistema lo suficientemente robusto para un entorno industrial (fábricas, sensores, mantenimiento predictivo), tuvimos que tomar tres decisiones críticas que sacrifican algunas comodidades típicas a cambio de ganar extrema estabilidad.
 
-### 1. Sistema Basado Completamente en Event-Sourcing (Single-Table Strategy)
+### 1. Usar una Única Tabla Maestra de "Solo Lectura/Escritura" (Event Sourcing)
 
-En lugar de crear múltiples tablas tradicionales (`machines`, `products`, `metrics`), el backend entero se diseña como un almacén inmutable de tipo *Append-Only* («Solo inserciones») en una única tabla PostgreSQL denominada `events`.
+En lugar de construir el clásico esquema con múltiples tablas (una tabla de `maquinas`, otra de `productos`, otra de `medidas`), decidimos meter absolutamente todo en una sola tabla de PostgreSQL llamada `events`. Y la regla de oro es: **Nunca se usa el comando UPDATE**. Solo se agregan filas nuevas.
 
-- **Por qué funciona para un Data Scientist:** La arquitectura permite la trazabilidad perfecta de los tiempos de los sensores y, más importante aún, ofrece reconstitución del estado exacto en un momento pasado de la máquina, posibilitando el **Time Travel** nativo sin tablas de versionado explícitas.
-- **Por qué PostgreSQL con `JSONB`**: Se evita SQLite porque no da soporte nativo asincrónico para JSONB completo en el Driver de SQLAlchemy. Postgresql gestiona índices `JSONB` que permiten al *Correlation Engine* realizar consultas ultra-rápidas extrayendo variables dinámicas según se descubren, garantizando además bloqueos mínimos a las lecturas al insertar alta frecuencia (MVCC).
+* **El beneficio:** Si un Data Scientist quiere saber cómo estaba la máquina "L" ayer al mediodía, no tiene que adivinar ni pelear con tablas sobrescritas. Tienes una máquina del tiempo perfecta ("Time-Travel") porque la base de datos funciona como un diario de vida cronológico.
+* **El costo (Trade-off):** La base de datos crece hacia abajo muy rápido, y extraer el estado "actual" nos obliga a leer la historia en lugar de simplemente mirar una celda actualizada.
 
-### 2. Idempotencia mediante Hashing Determinístico en el Pipeline
+### 2. Generar IDs infalibles para evitar datos duplicados (Idempotencia)
 
-Para hacer robusto al sistema de ingesta (M1) a fallos en el sistema eléctrico o red en el entorno local u on-premise de las máquinas, se implementó una estrategia matemática para calcular las PK (`event_id` como UUID5) basados en fragmentos del CSV (El ID Único de producto + una firma criptográfica SHA-256 natural de todas las medidas).
+Las fábricas suelen tener caídas de red. Si el script que lee el archivo CSV se corta a la mitad y lo volvemos a encender, el mayor riesgo era que empezara a guardar las mediciones de los sensores dos veces en la base de datos (corrompiendo el modelo de ML de tu compañero).
 
-- **El "Por Qué":** Si un batch falla a la mitad y se re-ejecuta el script, un simple `INSERT ON CONFLICT DO NOTHING` filtra los miles de eventos duplicados en base de datos.
-- **Trade-off de recursos:** Esta técnica exige tiempo de CPU para hacer hashing, pero elimina la alternativa perniciosa de requerir la mantención de archivos stateful como "checkpoints" que suelen asincronizarse de la BD en caídas fatales.
+* **El beneficio:** En vez de dejar que la base de datos asigne IDs clásicos (`1, 2, 3...`), programamos el backend para que le fabrique una huella digital única (UUID) a cada fila del CSV combinando la temperatura, el modelo y su código. Así, si el script intenta guardar accidentalmente el mismo dato dos veces, PostgresSQL reconoce la huella repetida y la rebota silenciosamente sin romper nada.
+* **El costo (Trade-off):** Generar estas huellas toma un poco más de energía de cálculo (CPU) antes de guardar el dato, haciendo la ingesta ligeramente más lenta.
 
-### 3. Materialización Asincrónica del Digital Twin en la Base de Datos (Eventos Secundarios)
+### 3. Tomar "Fotografías" del estado de las máquinas (Snapshots del Twin)
 
-Para el Digital Twin (M2) decidimos no realizar el cálculo estadístico computacional iterando todos los miles de eventos origen de una máquina cada vez que se solicita por HTTP `GET /health`. Por el contrario, la aplicación inserta un segundo tipo de evento (`domain='TWIN_STATE'`) en la misma base de datos, en el cual guarda un *snapshot* o *vista materializada* de las propiedades promediadas (Pieces, Wear, Failure Rate, etc).
+En vez de obligar al servidor web a hacer un conteo matemático gigante sumando miles de eventos antiguos de temperatura cada vez que alguien entra a ver la pantalla del navegador (`/health/view`), decidimos que el backend guarde "resúmenes" de forma automática.
 
-- **Beneficio Principal:** Consultar el estado actual de una máquina pasa a ser una transacción `O(1)` (`SELECT * FROM events WHERE ... LIMIT 1`) independiente de cuántos millones de logs originen la serie.
-- **Beneficio para Data Science (M3):** Al separar el origen y los *insights*, permitimos a tu compañero trabajar tranquilamente consultando eventos `SOURCE` estáticos sin verse perturbado por escrituras paralelas de promedios de gemelos digitales.
+* **El beneficio:** Cuando alguien abre el Dashboard en su computadora, la respuesta del servidor es instantánea, sin importar si la máquina lleva procesadas 5 piezas o 5 millones de piezas. El servidor solo lee la "última foto" guardada de los promedios.
+* **El costo (Trade-off):** Usamos más espacio en el disco duro, ya que por cada tanda nueva de datos de los sensores que entra, tenemos que crear un bloque nuevo en la base de datos exclusivamente para guardar el resumen fotográfico.
