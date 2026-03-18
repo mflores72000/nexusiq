@@ -1,5 +1,5 @@
 """
-Punto de entrada principal de FastAPI — NexusIQ Platform
+Punto de entrada principal de FastAPI — Platform
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
