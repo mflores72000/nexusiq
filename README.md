@@ -37,8 +37,8 @@ docker-compose run --rm app pytest tests/ -v --tb=short
 2. **Endpoints de la Arquitectura Backend**:  
    Adicionalmente a navegar por Swagger OpenAPI **([http://localhost:8000/docs](http://localhost:8000/docs))**, los componentes REST vitales incluyen:
 
-   - `GET /health` (UI Minimalista interactiva / Dashboard)
-   - `GET /health/stats` (Devuelve el `status` del Event-sourcing y número de datos en RAW JSON)
+   - `GET /health` (`status` del Event-sourcing y número de datos en RAW JSON)
+   - `GET /health/view` (UI Minimalista interactiva / Dashboard HTML)
    - `GET /events` (Devuelve todos los eventos, con paginación `limit` y `offset`, filtrables por `domain`, `entity_id` y timestamps)
    - `GET /events/{event_id}` (Devuelve un evento puntual buscado por su UUID)
    - `GET /twins/{machine_id}` (Digital Twin puro con formula DS o default)

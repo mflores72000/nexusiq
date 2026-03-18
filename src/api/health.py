@@ -9,12 +9,12 @@ from src.database import get_db
 router = APIRouter(tags=["Health"])
 
 
-@router.get("/health", response_class=HTMLResponse)
+@router.get("/health/view", response_class=HTMLResponse)
 def get_dashboard():
     template_path = Path(__file__).parent.parent / "templates" / "dashboard.html"
     return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
 
-@router.get("/health/stats")
+@router.get("/health")
 def get_health_stats(db: Session = Depends(get_db)):
     event_count = db.execute(text("SELECT COUNT(*) FROM events")).scalar() or 0
 
