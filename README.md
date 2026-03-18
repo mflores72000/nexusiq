@@ -38,9 +38,13 @@ docker-compose run --rm app pytest tests/ -v --tb=short
    Adicionalmente a navegar por Swagger OpenAPI **([http://localhost:8000/docs](http://localhost:8000/docs))**, los componentes REST vitales incluyen:
 
    - `GET /health` (`status` del Event-sourcing y número de datos)
+   - `GET /health/dashboard` (UI Minimalista interactiva)
+   - `GET /events` (Devuelve todos los eventos, con paginación `limit` y `offset`, filtrables por `domain`, `entity_id` y timestamps)
+   - `GET /events/{event_id}` (Devuelve un evento puntual buscado por su UUID)
    - `GET /twins/{machine_id}` (Digital Twin puro con formula DS o default)
    - `GET /twins/{machine_id}/at?timestamp=YYYY-MM-DD...` (Time-Travel estático temporal)
    - `GET /correlations` (Narrativas y métodos predictivos en Español filtrados por p_value de Bonferroni ajustados)
+   - `POST /pipeline/run` (Dispara la ingesta de forma asíncrona manual, devuelve Job ID)
 
 ## 🗃️ Directorio / Estructura Analítica (Backend Engineering & Data Science)
 Se organizó la prueba modularmente:
