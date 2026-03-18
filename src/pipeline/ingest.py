@@ -89,7 +89,7 @@ def _bulk_insert(db: Session, batch: list[dict]) -> tuple[int, int]:
     return inserted, len(batch) - inserted
 
 
-def run_ingestion(csv_path: str | None = None) -> dict:
+def run_ingestion(csv_path: str | None = None, db: Session | None = None) -> dict:
     """Lee el CSV, valida, deduplica por UUID5 y carga al event log."""
     csv_path = csv_path or settings.csv_path
     job_id = uuid.uuid4()
@@ -102,7 +102,11 @@ def run_ingestion(csv_path: str | None = None) -> dict:
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"CSV no encontrado: {csv_path}")
 
-    db: Session = SessionLocal()
+    close_db = False
+    if db is None:
+        db = SessionLocal()
+        close_db = True
+
     stats = {"job_id": str(job_id), "total_rows": 0, "inserted": 0, "skipped_duplicates": 0, "errors": []}
 
     try:
@@ -172,7 +176,8 @@ def run_ingestion(csv_path: str | None = None) -> dict:
             pass
         raise
     finally:
-        db.close()
+        if close_db:
+            db.close()
 
     return stats
 

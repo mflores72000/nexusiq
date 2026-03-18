@@ -8,5 +8,4 @@ dist/
 build/
 .git
 .gitignore
-tests/
-*.md
+
