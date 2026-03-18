@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusIQ — Live Telemetry</title>
+    <!-- Modern Premium Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Fluent UI Icons for visual polish -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <style>
+        :root {
+            /* Premium Dark Theme Core */
+            --bg-color: #0b0f19;
+            --surface-color: rgba(23, 33, 53, 0.4);
+            --surface-color-hover: rgba(28, 41, 65, 0.6);
+            --stroke-color: rgba(255, 255, 255, 0.05);
+            /* Accents & Gradients */
+            --accent-primary: #3b82f6;     /* Blue */
+            --accent-secondary: #8b5cf6;   /* Violet */
+            --accent-success: #10b981;     /* Emerald */
+            --accent-warning: #f59e0b;     /* Amber */
+            /* Text */
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --font-family: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1.5rem;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Nav & Brand */
+        .header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .brand i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-success);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-success);
+            box-shadow: 0 0 10px var(--accent-success);
+            animation: pulse-green 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Metric Cards Grid */
+        .dashboard-grid {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Glassmorphism Card Style */
+        .metric-card {
+            background: var(--surface-color);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--stroke-color);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            background: var(--surface-color-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Interactive Gradient border hover effect */
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .metric-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Card Content */
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-header i {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            opacity: 0.8;
+            background: var(--bg-color);
+            padding: 0.4rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--stroke-color);
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+        }
+
+        .metric-value span.unit {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .metric-footer {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Loading / Re-fetching Animation */
+        .updating-flash {
+            animation: text-flash 0.5s ease-out;
+        }
+
+        @keyframes text-flash {
+            0% { color: var(--accent-primary); text-shadow: 0 0 10px var(--accent-primary); }
+            100% { color: var(--text-primary); text-shadow: none; }
+        }
+
+        .last-update {
+            margin-top: 3rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.7;
+        }
+        
+        .last-update i {
+            animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Refresh Bar */
+        .progress-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-top: -1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 0 8px var(--accent-primary);
+            transition: width 0.1s linear;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: flex-start;
+            }
+            .metric-value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="brand">
+            <i class="ri-pulse-line"></i>
+            NexusIQ Telemetry
+        </div>
+        <div class="status-badge" id="app-status">
+            Sistema En Línea
+        </div>
+    </div>
+
+    <!-- Live Polling Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="poll-progress"></div>
+    </div>
+
+    <div class="dashboard-grid">
+        
+        <!-- Total Events -->
+        <div class="metric-card">
+            <div class="metric-header">
+                Total Eventos
+                <i class="ri-database-2-line"></i>
+            </div>
+            <div class="metric-value updating-flash" id="metric-events">0</div>
+            <div class="metric-footer" id="metric-events-desc">En append-only log</div>
+        </div>
+
+        <!-- Latency -->
+        <div class="metric-card">
+            <div class="metric-header">
+                Lag Ingesta (Avg)
+                <i class="ri-history-line"></i>
+            </div>
+            <div class="metric-value updating-flash" id="metric-lag">0.0 <span class="unit">ms</span></div>
+            <div class="metric-footer" id="metric-lag-desc">Tiempo origen-BD</div>
+        </div>
+
+        <!-- Insights -->
+        <div class="metric-card" style="border-top: 1px solid var(--accent-secondary);">
+            <div class="metric-header" style="color: var(--accent-secondary);">
+                Insights Generados
+                <i class="ri-brain-line" style="color: var(--accent-secondary); border-color: rgba(139, 92, 246, 0.3);"></i>
+            </div>
+            <div class="metric-value updating-flash" id="metric-insights">0</div>
+            <div class="metric-footer" id="metric-insights-desc">Nuevas correlaciones M3</div>
+        </div>
+
+        <!-- Twins -->
+        <div class="metric-card">
+            <div class="metric-header">
+                Stale Twins (Anomalías)
+                <i class="ri-robot-2-line" id="icon-twins"></i>
+            </div>
+            <div class="metric-value updating-flash" id="metric-twins">0</div>
+            <div class="metric-footer" id="metric-twins-desc">Digital Twins desactualizados (>1h)</div>
+        </div>
+
+    </div>
+
+    <div class="last-update">
+        <i class="ri-settings-4-line"></i> Editado por Inteligencia Artificial y tu DS local · Último chequeo <span id="last-time">--:--:--</span>
+    </div>
+
+    <script>
+        const UPDATE_INTERVAL_MS = 5000;
+        let lastFetchTime = Date.now();
+
+        // Animar cuenta
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // Math.floor para estéticas limpias
+                obj.innerText = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    // Flash effect
+                    obj.classList.remove('updating-flash');
+                    void obj.offsetWidth; // trigger reflow
+                    obj.classList.add('updating-flash');
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        async function fetchHealth() {
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                
+                // Actualizar eventos
+                const elEvents = document.getElementById('metric-events');
+                const currentEvents = parseInt(elEvents.innerText.replace(/,/g, '')) || 0;
+                if (currentEvents !== data.event_count) animateValue(elEvents, currentEvents, data.event_count, 1000);
+
+                // Actualizar lag
+                document.getElementById('metric-lag').innerHTML = `${data.avg_lag_ms} <span class="unit">ms</span>`;
+                document.getElementById('metric-lag').classList.remove('updating-flash');
+                void document.getElementById('metric-lag').offsetWidth;
+                document.getElementById('metric-lag').classList.add('updating-flash');
+
+                // Insights
+                const elInsights = document.getElementById('metric-insights');
+                const currentInsights = parseInt(elInsights.innerText.replace(/,/g, '')) || 0;
+                if (currentInsights !== data.insight_count) animateValue(elInsights, currentInsights, data.insight_count, 1000);
+
+                // Twins Desactualizados
+                const elTwins = document.getElementById('metric-twins');
+                elTwins.innerText = data.stale_twins;
+                const iconTwins = document.getElementById('icon-twins');
+                if (data.stale_twins > 0) {
+                    elTwins.style.color = 'var(--accent-warning)';
+                    iconTwins.style.color = 'var(--accent-warning)';
+                    iconTwins.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                } else {
+                    elTwins.style.color = 'var(--text-primary)';
+                    iconTwins.style.color = 'var(--text-primary)';
+                    iconTwins.style.borderColor = 'var(--stroke-color)';
+                }
+
+                // Status Badge
+                const badge = document.getElementById('app-status');
+                if(data.status === 'healthy') {
+                    badge.innerHTML = "Sistema En Línea";
+                    badge.style.color = "var(--accent-success)";
+                    badge.style.background = "rgba(16, 185, 129, 0.1)";
+                    badge.style.border = "1px solid rgba(16, 185, 129, 0.2)";
+                } else {
+                    badge.innerHTML = "Sistema Vacío / Esperando I/O";
+                    badge.style.color = "var(--accent-warning)";
+                    badge.style.background = "rgba(245, 158, 11, 0.1)";
+                    badge.style.border = "1px solid rgba(245, 158, 11, 0.2)";
+                }
+                
+                // Hora
+                const d = new Date(data.checked_at);
+                document.getElementById('last-time').innerText = d.toLocaleTimeString();
+
+            } catch (err) {
+                const badge = document.getElementById('app-status');
+                badge.innerHTML = "Desconectado";
+                badge.style.color = "#ef4444";
+                badge.style.background = "rgba(239, 68, 68, 0.1)";
+                badge.style.border = "1px solid rgba(239, 68, 68, 0.2)";
+            }
+            lastFetchTime = Date.now();
+        }
+
+        // Barra de progreso y polling loop
+        setInterval(() => {
+            const now = Date.now();
+            const elapsed = now - lastFetchTime;
+            let percent = (elapsed / UPDATE_INTERVAL_MS) * 100;
+            if (percent > 100) percent = 100;
+            document.getElementById('poll-progress').style.width = percent + '%';
+
+            if (elapsed >= UPDATE_INTERVAL_MS) {
+                document.getElementById('poll-progress').style.transition = 'none';
+                document.getElementById('poll-progress').style.width = '0%';
+                setTimeout(() => { document.getElementById('poll-progress').style.transition = 'width 0.1s linear'; }, 50);
+                fetchHealth();
+            }
+        }, 100);
+
+        // Fetch inicial
+        fetchHealth();
+
+    </script>
+</body>
+</html>

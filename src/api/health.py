@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+from pathlib import Path
 from fastapi import APIRouter, Depends
+from fastapi.responses import HTMLResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from src.database import get_db
@@ -40,3 +42,8 @@ def get_health(db: Session = Depends(get_db)):
         "insight_count": insight_count,
         "checked_at": datetime.now(timezone.utc).isoformat(),
     }
+
+@router.get("/health/dashboard", response_class=HTMLResponse)
+def get_dashboard():
+    template_path = Path(__file__).parent.parent / "templates" / "dashboard.html"
+    return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
