@@ -349,7 +349,7 @@
 
         async function fetchHealth() {
             try {
-                const res = await fetch('/health');
+                const res = await fetch('/health/stats');
                 const data = await res.json();
                 
                 // Actualizar eventos

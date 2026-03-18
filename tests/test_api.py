@@ -21,7 +21,7 @@ def test_root_endpoint():
 
 def test_health_endpoint_structure():
     """GET /health debe retornar los campos requeridos por el enunciado."""
-    response = client.get("/health")
+    response = client.get("/health/stats")
     assert response.status_code == 200
     data = response.json()
 
