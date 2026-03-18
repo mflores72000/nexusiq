@@ -4,10 +4,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 import uuid
 
-
 class Base(DeclarativeBase):
     pass
-
 
 class Event(Base):
     """
