@@ -27,12 +27,12 @@ Toda la lógica crítica (`detrending, idempotencia UDI, time-travel temporal` y
 docker-compose run --rm app pytest tests/ -v --tb=short
 ```
 
-## 🔌 API y Visualización de Componentes (`/health/dashboard`)
+## 🔌 API y Visualización de Componentes (`/health/view`)
 
 *La mejor manera de sentir en profundidad la plataforma funcionando es consumiendo sus Endpoints*.
 
 1. **La Interfaz Interactiva Web "NexusIQ Telemetry"**: Hemos proveído de forma directa en Fastapi un frontend CSS puro minimalista y Glassmorphic:  
-   Visita localmente **[http://localhost:8000/health/dashboard](http://localhost:8000/health/dashboard)**, observando métricas como los **Insights descubiertos**, gemelos desactualizados y milisegundos de *Lag*.
+   Visita localmente **[http://localhost:8000/health/view](http://localhost:8000/health/view)**, observando métricas como los **Insights descubiertos**, gemelos desactualizados y milisegundos de *Lag*.
 
 2. **Endpoints de la Arquitectura Backend**:  
    Adicionalmente a navegar por Swagger OpenAPI **([http://localhost:8000/docs](http://localhost:8000/docs))**, los componentes REST vitales incluyen:
