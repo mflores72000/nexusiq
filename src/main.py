@@ -8,7 +8,7 @@ from src.config import settings
 from src.api.health import router as health_router
 from src.api.events import router as events_router
 from src.api.twins import router as twins_router
-from src.api.pipeline import router_correlations, router_pipeline
+from src.api.pipeline import router_correlations, router_pipeline, router_admin
 
 app = FastAPI(
     title=settings.app_name,
@@ -34,6 +34,7 @@ app.include_router(events_router)
 app.include_router(twins_router)
 app.include_router(router_correlations)
 app.include_router(router_pipeline)
+app.include_router(router_admin)
 
 
 @app.get("/", tags=["Root"])
@@ -53,5 +54,6 @@ def root():
             "GET  /correlations",
             "POST /correlations/run",
             "POST /pipeline/run",
+            "DELETE /admin/reset",
         ],
     }

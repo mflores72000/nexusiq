@@ -3,258 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Telemetry</title>
-    <!-- Modern Premium Font -->
+    <title>NexusIQ — Live Telemetry</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <!-- Fluent UI Icons for visual polish -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
     <style>
         :root {
-            /* Premium Dark Theme Core */
-            --bg-color: #0b0f19;
-            --surface-color: rgba(23, 33, 53, 0.4);
-            --surface-color-hover: rgba(28, 41, 65, 0.6);
-            --stroke-color: rgba(255, 255, 255, 0.05);
-            /* Accents & Gradients */
-            --accent-primary: #3b82f6;     /* Blue */
-            --accent-secondary: #8b5cf6;   /* Violet */
-            --accent-success: #10b981;     /* Emerald */
-            --accent-warning: #f59e0b;     /* Amber */
-            /* Text */
-            --text-primary: #ffffff;
-            --text-secondary: #94a3b8;
-            --font-family: 'Outfit', sans-serif;
+            --bg: #0b0f19;
+            --surface: rgba(23, 33, 53, 0.5);
+            --surface-hover: rgba(28, 41, 65, 0.7);
+            --stroke: rgba(255, 255, 255, 0.06);
+            --blue: #3b82f6;
+            --violet: #8b5cf6;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --text: #ffffff;
+            --muted: #94a3b8;
+            --font: 'Outfit', sans-serif;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
-            color: var(--text-primary);
-            font-family: var(--font-family);
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(59,130,246,0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139,92,246,0.08), transparent 25%);
+            color: var(--text);
+            font-family: var(--font);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 3rem 1.5rem;
-            line-height: 1.5;
+            padding: 2.5rem 1.5rem 4rem;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Nav & Brand */
         .header {
             width: 100%;
             max-width: 1200px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 3.5rem;
+            margin-bottom: 2.5rem;
         }
+        .brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; }
+        .brand i { font-size: 2rem; background: linear-gradient(135deg, var(--blue), var(--violet)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .status-badge { display: flex; align-items: center; gap: 0.5rem; background: rgba(16,185,129,0.1); color: var(--green); padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; border: 1px solid rgba(16,185,129,0.2); }
+        .status-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.2)} }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.75rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
+        .progress-container { width: 100%; max-width: 1200px; height: 3px; background: rgba(255,255,255,0.05); margin-bottom: 2rem; border-radius: 2px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue), var(--violet)); box-shadow: 0 0 8px var(--blue); transition: width 0.1s linear; }
 
-        .brand i {
-            font-size: 2rem;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .metric-grid { width: 100%; max-width: 1200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .card { background: var(--surface); backdrop-filter: blur(16px); border: 1px solid var(--stroke); border-radius: 1.25rem; padding: 1.75rem; display: flex; flex-direction: column; gap: 0.75rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .card:hover { background: var(--surface-hover); transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.25); }
+        .card::after { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--blue), transparent); opacity: 0; transition: opacity 0.3s; }
+        .card:hover::after { opacity: 1; }
 
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-success);
-            padding: 0.5rem 1rem;
-            border-radius: 999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
-        }
+        .card-label { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .card-label i { font-size: 1.1rem; color: var(--text); opacity: 0.7; background: var(--bg); padding: 0.35rem; border-radius: 0.5rem; border: 1px solid var(--stroke); }
+        .card-value { font-size: 2.8rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+        .card-value .unit { font-size: 0.95rem; font-weight: 400; color: var(--muted); }
+        .card-footer { font-size: 0.82rem; color: var(--muted); }
 
-        .status-badge::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--accent-success);
-            box-shadow: 0 0 10px var(--accent-success);
-            animation: pulse-green 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-        }
+        @keyframes flash { 0%{color:var(--blue);text-shadow:0 0 10px var(--blue)} 100%{color:var(--text);text-shadow:none} }
+        .flash { animation: flash 0.6s ease-out; }
 
-        @keyframes pulse-green {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-
-        /* Metric Cards Grid */
-        .dashboard-grid {
+        .panel {
             width: 100%;
             max-width: 1200px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        /* Glassmorphism Card Style */
-        .metric-card {
-            background: var(--surface-color);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--stroke-color);
+            background: var(--surface);
+            border: 1px solid var(--stroke);
             border-radius: 1.25rem;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            padding: 1.75rem;
+            margin-bottom: 1.25rem;
         }
+        .panel-title { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
-        .metric-card:hover {
-            background: var(--surface-color-hover);
-            transform: translateY(-4px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.65rem 1.25rem; border-radius: 0.75rem;
+            border: 1px solid var(--stroke); background: rgba(255,255,255,0.05);
+            color: var(--text); font-family: var(--font); font-size: 0.875rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s ease;
         }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-blue   { background: rgba(59,130,246,0.15);  border-color: rgba(59,130,246,0.3);  color: #93c5fd; }
+        .btn-blue:hover   { background: rgba(59,130,246,0.25); }
+        .btn-violet { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.3); color: #c4b5fd; }
+        .btn-violet:hover { background: rgba(139,92,246,0.25); }
+        .btn-green  { background: rgba(16,185,129,0.15);  border-color: rgba(16,185,129,0.3);  color: #6ee7b7; }
+        .btn-green:hover  { background: rgba(16,185,129,0.25); }
+        .btn-red    { background: rgba(239,68,68,0.1);    border-color: rgba(239,68,68,0.25);  color: #fca5a5; }
+        .btn-red:hover    { background: rgba(239,68,68,0.2); }
 
-        /* Interactive Gradient border hover effect */
-        .metric-card::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .metric-card:hover::after {
-            opacity: 1;
-        }
+        #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); border: 1px solid var(--stroke); border-radius: 0.75rem; padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 600; opacity: 0; transform: translateY(10px); transition: all 0.3s ease; pointer-events: none; backdrop-filter: blur(12px); }
+        #toast.show { opacity: 1; transform: translateY(0); }
 
-        /* Card Content */
-        .metric-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .metric-header i {
-            font-size: 1.25rem;
-            color: var(--text-primary);
-            opacity: 0.8;
-            background: var(--bg-color);
-            padding: 0.4rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--stroke-color);
-        }
-
-        .metric-value {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: baseline;
-            gap: 0.25rem;
-        }
-
-        .metric-value span.unit {
-            font-size: 1rem;
-            font-weight: 400;
-            color: var(--text-secondary);
-        }
-
-        .metric-footer {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        /* Loading / Re-fetching Animation */
-        .updating-flash {
-            animation: text-flash 0.5s ease-out;
-        }
-
-        @keyframes text-flash {
-            0% { color: var(--accent-primary); text-shadow: 0 0 10px var(--accent-primary); }
-            100% { color: var(--text-primary); text-shadow: none; }
-        }
-
-        .last-update {
-            margin-top: 3rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            opacity: 0.7;
-        }
-        
-        .last-update i {
-            animation: spin 3s linear infinite;
-        }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* Refresh Bar */
-        .progress-container {
-            width: 100%;
-            max-width: 1200px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.05);
-            margin-top: -1.5rem;
-            margin-bottom: 2rem;
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            box-shadow: 0 0 8px var(--accent-primary);
-            transition: width 0.1s linear;
-        }
+        .last-update { margin-top: 1rem; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; opacity: 0.7; }
+        @keyframes spin { 100%{ transform: rotate(360deg); } }
+        .spin { animation: spin 3s linear infinite; display: inline-block; }
 
         @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            .header {
-                flex-direction: column;
-                gap: 1.5rem;
-                align-items: flex-start;
-            }
-            .metric-value {
-                font-size: 2.5rem;
-            }
+            .metric-grid { grid-template-columns: 1fr 1fr; }
+            .header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .card-value { font-size: 2rem; }
         }
     </style>
 </head>
@@ -262,173 +119,259 @@
 
     <div class="header">
         <div class="brand">
-            <i class="ri-pulse-line"></i>
-            Telemetry
+            <i class="ri-pulse-line"></i>NexusIQ Telemetry
         </div>
-        <div class="status-badge" id="app-status">
-            Sistema En Línea
-        </div>
+        <div class="status-badge" id="app-status">Sistema En Línea</div>
     </div>
 
-    <!-- Live Polling Progress Bar -->
     <div class="progress-container">
         <div class="progress-bar" id="poll-progress"></div>
     </div>
 
-    <div class="dashboard-grid">
-        
-        <!-- Total Events -->
-        <div class="metric-card">
-            <div class="metric-header">
-                Total Eventos
-                <i class="ri-database-2-line"></i>
-            </div>
-            <div class="metric-value updating-flash" id="metric-events">0</div>
-            <div class="metric-footer" id="metric-events-desc">En append-only log</div>
+    <!-- Metrics -->
+    <div class="metric-grid">
+        <div class="card">
+            <div class="card-label">Total Eventos <i class="ri-database-2-line"></i></div>
+            <div class="card-value" id="m-events">0</div>
+            <div class="card-footer">Append-only event log</div>
         </div>
-
-        <!-- Latency -->
-        <div class="metric-card">
-            <div class="metric-header">
-                Lag Ingesta (Avg)
-                <i class="ri-history-line"></i>
-            </div>
-            <div class="metric-value updating-flash" id="metric-lag">0.0 <span class="unit">ms</span></div>
-            <div class="metric-footer" id="metric-lag-desc">Tiempo origen-BD</div>
+        <div class="card">
+            <div class="card-label">Lag Ingesta (Avg) <i class="ri-history-line"></i></div>
+            <div class="card-value" id="m-lag">0.0 <span class="unit">ms</span></div>
+            <div class="card-footer">Tiempo origen → BD</div>
         </div>
-
-        <!-- Insights -->
-        <div class="metric-card" style="border-top: 1px solid var(--accent-secondary);">
-            <div class="metric-header" style="color: var(--accent-secondary);">
-                Insights Generados
-                <i class="ri-brain-line" style="color: var(--accent-secondary); border-color: rgba(139, 92, 246, 0.3);"></i>
-            </div>
-            <div class="metric-value updating-flash" id="metric-insights">0</div>
-            <div class="metric-footer" id="metric-insights-desc">Nuevas correlaciones M3</div>
+        <div class="card" style="border-top:1px solid rgba(139,92,246,0.4)">
+            <div class="card-label" style="color:var(--violet)">Correlaciones <i class="ri-brain-line" style="color:var(--violet)"></i></div>
+            <div class="card-value" id="m-insights">0</div>
+            <div class="card-footer">Eventos INSIGHT en log</div>
         </div>
-
-        <!-- Twins -->
-        <div class="metric-card">
-            <div class="metric-header">
-                Stale Twins (Anomalías)
-                <i class="ri-robot-2-line" id="icon-twins"></i>
-            </div>
-            <div class="metric-value updating-flash" id="metric-twins">0</div>
-            <div class="metric-footer" id="metric-twins-desc">Digital Twins desactualizados (>1h)</div>
+        <div class="card">
+            <div class="card-label">Stale Twins <i class="ri-robot-2-line" id="icon-twins"></i></div>
+            <div class="card-value" id="m-twins">0</div>
+            <div class="card-footer">Twins desactualizados (&gt;1h)</div>
         </div>
+    </div>
 
+    <!-- Actions -->
+    <div class="panel">
+        <div class="panel-title"><i class="ri-terminal-box-line"></i> Acciones del Sistema</div>
+        <div class="btn-row">
+            <button class="btn btn-blue"   id="btn-pipeline" onclick="runAction('pipeline')">
+                <i class="ri-play-circle-line"></i> Ejecutar Pipeline
+            </button>
+            <button class="btn btn-violet" id="btn-corr"     onclick="runAction('correlations')">
+                <i class="ri-link-m"></i> Calcular Correlaciones
+            </button>
+            <button class="btn btn-green"  id="btn-twins"    onclick="runAction('twins')">
+                <i class="ri-robot-2-line"></i> Materializar Twins
+            </button>
+            <button class="btn btn-red"    id="btn-reset"    onclick="runAction('reset')">
+                <i class="ri-delete-bin-line"></i> Reset BD
+            </button>
+        </div>
+    </div>
+
+    <!-- Digital Twins -->
+    <div class="panel">
+        <div class="panel-title"><i class="ri-robot-2-line"></i> Digital Twins — Estado en Vivo</div>
+        <div id="twins-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;">
+            <span style="color:var(--muted);font-size:0.85rem;">Cargando twins...</span>
+        </div>
+    </div>
+
+    <!-- Anomalías -->
+    <div class="panel" style="border-top:2px solid rgba(239,68,68,0.3);">
+        <div class="panel-title" style="color:var(--red)"><i class="ri-alarm-warning-line"></i> Anomalías Detectadas</div>
+        <div id="anomalies-list" style="font-size:0.875rem;color:var(--muted);">Cargando...</div>
     </div>
 
     <div class="last-update">
-        <i class="ri-settings-4-line"></i> Editado por Inteligencia Artificial y tu DS local · Último chequeo <span id="last-time">--:--:--</span>
+        <i class="ri-settings-4-line spin"></i>
+        Auto-refresh cada 5s · Último: <span id="last-time">--:--:--</span>
     </div>
 
-    <script>
-        const UPDATE_INTERVAL_MS = 5000;
-        let lastFetchTime = Date.now();
+    <div id="toast"></div>
 
-        // Animar cuenta
-        function animateValue(obj, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                // Math.floor para estéticas limpias
-                obj.innerText = Math.floor(progress * (end - start) + start).toLocaleString();
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    // Flash effect
-                    obj.classList.remove('updating-flash');
-                    void obj.offsetWidth; // trigger reflow
-                    obj.classList.add('updating-flash');
-                }
-            };
-            window.requestAnimationFrame(step);
+<script>
+    const UPDATE_MS = 5000;
+    let lastFetch = Date.now();
+    let prevEventCount = 0;
+
+    function showToast(msg, color) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.borderColor = color || 'var(--blue)';
+        t.style.color = color || 'var(--blue)';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    async function runAction(key) {
+        const map = {
+            pipeline:     { method: 'POST',   url: '/pipeline/run',     id: 'btn-pipeline' },
+            correlations: { method: 'POST',   url: '/correlations/run', id: 'btn-corr' },
+            reset:        { method: 'DELETE', url: '/admin/reset',      id: 'btn-reset' },
+        };
+
+        if (key === 'twins') {
+            showToast('Los twins se materializan al ejecutar Pipeline', 'var(--amber)');
+            return;
         }
 
-        async function fetchHealth() {
-            try {
-                const res = await fetch('/health');
-                const data = await res.json();
-                
-                // Actualizar eventos
-                const elEvents = document.getElementById('metric-events');
-                const currentEvents = parseInt(elEvents.innerText.replace(/,/g, '')) || 0;
-                if (currentEvents !== data.event_count) animateValue(elEvents, currentEvents, data.event_count, 1000);
+        const cfg = map[key];
+        const btn = document.getElementById(cfg.id);
+        if (btn) btn.disabled = true;
 
-                // Actualizar lag
-                document.getElementById('metric-lag').innerHTML = `${data.avg_lag_ms} <span class="unit">ms</span>`;
-                document.getElementById('metric-lag').classList.remove('updating-flash');
-                void document.getElementById('metric-lag').offsetWidth;
-                document.getElementById('metric-lag').classList.add('updating-flash');
-
-                // Insights
-                const elInsights = document.getElementById('metric-insights');
-                const currentInsights = parseInt(elInsights.innerText.replace(/,/g, '')) || 0;
-                if (currentInsights !== data.insight_count) animateValue(elInsights, currentInsights, data.insight_count, 1000);
-
-                // Twins Desactualizados
-                const elTwins = document.getElementById('metric-twins');
-                elTwins.innerText = data.stale_twins;
-                const iconTwins = document.getElementById('icon-twins');
-                if (data.stale_twins > 0) {
-                    elTwins.style.color = 'var(--accent-warning)';
-                    iconTwins.style.color = 'var(--accent-warning)';
-                    iconTwins.style.borderColor = 'rgba(245, 158, 11, 0.3)';
-                } else {
-                    elTwins.style.color = 'var(--text-primary)';
-                    iconTwins.style.color = 'var(--text-primary)';
-                    iconTwins.style.borderColor = 'var(--stroke-color)';
-                }
-
-                // Status Badge
-                const badge = document.getElementById('app-status');
-                if(data.status === 'healthy') {
-                    badge.innerHTML = "Sistema En Línea";
-                    badge.style.color = "var(--accent-success)";
-                    badge.style.background = "rgba(16, 185, 129, 0.1)";
-                    badge.style.border = "1px solid rgba(16, 185, 129, 0.2)";
-                } else {
-                    badge.innerHTML = "Sistema Vacío / Esperando I/O";
-                    badge.style.color = "var(--accent-warning)";
-                    badge.style.background = "rgba(245, 158, 11, 0.1)";
-                    badge.style.border = "1px solid rgba(245, 158, 11, 0.2)";
-                }
-                
-                // Hora
-                const d = new Date(data.checked_at);
-                document.getElementById('last-time').innerText = d.toLocaleTimeString();
-
-            } catch (err) {
-                const badge = document.getElementById('app-status');
-                badge.innerHTML = "Desconectado";
-                badge.style.color = "#ef4444";
-                badge.style.background = "rgba(239, 68, 68, 0.1)";
-                badge.style.border = "1px solid rgba(239, 68, 68, 0.2)";
-            }
-            lastFetchTime = Date.now();
+        if (key === 'reset' && !confirm('⚠️ Esto eliminará TODOS los eventos. ¿Confirmas?')) {
+            if (btn) btn.disabled = false;
+            return;
         }
 
-        // Barra de progreso y polling loop
-        setInterval(() => {
-            const now = Date.now();
-            const elapsed = now - lastFetchTime;
-            let percent = (elapsed / UPDATE_INTERVAL_MS) * 100;
-            if (percent > 100) percent = 100;
-            document.getElementById('poll-progress').style.width = percent + '%';
-
-            if (elapsed >= UPDATE_INTERVAL_MS) {
-                document.getElementById('poll-progress').style.transition = 'none';
-                document.getElementById('poll-progress').style.width = '0%';
-                setTimeout(() => { document.getElementById('poll-progress').style.transition = 'width 0.1s linear'; }, 50);
+        try {
+            const res  = await fetch(cfg.url, { method: cfg.method });
+            const data = await res.json();
+            if (!res.ok) {
+                showToast('Error en la operación', 'var(--red)');
+            } else {
+                if (key === 'pipeline')     showToast('Pipeline iniciado ▶  (logs en docker)', 'var(--blue)');
+                if (key === 'correlations') showToast(data.count + ' correlación(es) encontrada(s) ✓', 'var(--violet)');
+                if (key === 'reset')        { showToast('Reset OK — ' + data.deleted_events + ' eventos eliminados', 'var(--amber)'); prevEventCount = 0; }
                 fetchHealth();
+                fetchTwins();
             }
-        }, 100);
+        } catch (_) {
+            showToast('Error de red', 'var(--red)');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
 
-        // Fetch inicial
-        fetchHealth();
+    function animateValue(el, from, to) {
+        let start = null;
+        const step = (t) => {
+            if (!start) start = t;
+            const p = Math.min((t - start) / 800, 1);
+            el.childNodes[0].textContent = Math.floor(p * (to - from) + from).toLocaleString();
+            if (p < 1) requestAnimationFrame(step);
+            else { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+        };
+        requestAnimationFrame(step);
+    }
 
-    </script>
+    async function fetchHealth() {
+        try {
+            const res = await fetch('/health');
+            const d   = await res.json();
+
+            const elEv = document.getElementById('m-events');
+            if (prevEventCount !== d.event_count) {
+                if (!elEv.dataset.init) {
+                    elEv.innerHTML = d.event_count.toLocaleString();
+                    elEv.dataset.init = '1';
+                } else {
+                    const span = document.createElement('span');
+                    span.textContent = prevEventCount.toLocaleString();
+                    elEv.innerHTML = '';
+                    elEv.appendChild(span);
+                    animateValue(elEv, prevEventCount, d.event_count);
+                }
+                prevEventCount = d.event_count;
+            }
+
+            document.getElementById('m-lag').innerHTML     = d.avg_lag_ms + ' <span class="unit">ms</span>';
+            document.getElementById('m-insights').textContent = d.insight_count;
+
+            const elTw   = document.getElementById('m-twins');
+            const iconTw = document.getElementById('icon-twins');
+            elTw.textContent     = d.stale_twins;
+            elTw.style.color     = d.stale_twins > 0 ? 'var(--amber)' : 'var(--text)';
+            iconTw.style.color   = d.stale_twins > 0 ? 'var(--amber)' : 'var(--text)';
+
+            const badge = document.getElementById('app-status');
+            if (d.status === 'healthy') {
+                badge.style.cssText = 'color:var(--green);background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)';
+                badge.textContent = 'Sistema En Línea';
+            } else {
+                badge.style.cssText = 'color:var(--amber);background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2)';
+                badge.textContent = 'Sin datos — Ejecuta Pipeline';
+            }
+            document.getElementById('last-time').textContent = new Date(d.checked_at).toLocaleTimeString();
+        } catch (_) {
+            const badge = document.getElementById('app-status');
+            badge.style.cssText = 'color:var(--red);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2)';
+            badge.textContent = 'Desconectado';
+        }
+        lastFetch = Date.now();
+    }
+
+    async function fetchTwins() {
+        try {
+            const res  = await fetch('/twins/');
+            if (!res.ok) return;
+            const data = await res.json();
+            const grid = document.getElementById('twins-grid');
+            const anom = document.getElementById('anomalies-list');
+
+            if (!data || Object.keys(data).length === 0) {
+                grid.innerHTML = '<span style="color:var(--muted);font-size:0.85rem;">Sin datos. Ejecuta el Pipeline primero.</span>';
+                anom.innerHTML = '<span style="color:var(--muted);">Sin datos.</span>';
+                return;
+            }
+
+            const anomalies = [];
+            let html = '';
+
+            for (const [id, t] of Object.entries(data)) {
+                const score = t.health_score ?? 0;
+                const pct   = Math.round(score * 100);
+                let color = 'var(--green)', label = 'Saludable';
+                if (score < 0.5)       { color = 'var(--red)';   label = 'Crítico ⚠'; }
+                else if (score < 0.75) { color = 'var(--amber)'; label = 'Advertencia'; }
+
+                if (score < 0.75) anomalies.push({ id, pct, label, failures: t.total_failures ?? 0, recent: Math.round((t.failure_rate_recent ?? 0) * 100) });
+
+                html += `<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:1rem;padding:1.25rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                        <span style="font-weight:800;font-size:1.1rem;">Máquina ${id}</span>
+                        <span style="font-size:0.75rem;font-weight:600;color:${color};background:${color}22;padding:0.25rem 0.65rem;border-radius:999px;border:1px solid ${color}44;">${label}</span>
+                    </div>
+                    <div style="font-size:2.2rem;font-weight:800;color:${color};margin-bottom:0.5rem;">${pct}<span style="font-size:1rem;font-weight:400;color:var(--muted)">%</span></div>
+                    <div style="background:rgba(255,255,255,0.05);border-radius:4px;height:6px;margin-bottom:1rem;overflow:hidden;">
+                        <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width 0.5s ease;"></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;color:var(--muted);">
+                        <div>Piezas: <b style="color:var(--text)">${(t.pieces_processed ?? 0).toLocaleString()}</b></div>
+                        <div>Fallas: <b style="color:var(--text)">${t.total_failures ?? 0}</b></div>
+                        <div>Falla reciente: <b style="color:${(t.failure_rate_recent ?? 0) > 0.05 ? 'var(--amber)' : 'var(--text)'};">${Math.round((t.failure_rate_recent ?? 0) * 100)}%</b></div>
+                        <div>Desgaste avg: <b style="color:var(--text)">${t.avg_tool_wear_min ?? 0} min</b></div>
+                    </div>
+                </div>`;
+            }
+
+            grid.innerHTML = html;
+            anom.innerHTML = anomalies.length === 0
+                ? '<span style="color:var(--green);">✓ Todas las máquinas dentro de parámetros normales (health &ge; 75%).</span>'
+                : anomalies.map(a => `<div style="border-left:3px solid var(--red);padding:0.5rem 0.75rem;margin-bottom:0.5rem;background:rgba(239,68,68,0.05);border-radius:0 0.5rem 0.5rem 0;">
+                        <b style="color:var(--red)">Máquina ${a.id}</b> — Health: ${a.pct}% (${a.label}) | Fallas totales: ${a.failures} | Falla reciente: ${a.recent}%
+                    </div>`).join('');
+        } catch (_) {}
+    }
+
+    setInterval(() => {
+        const elapsed = Date.now() - lastFetch;
+        const pct = Math.min((elapsed / UPDATE_MS) * 100, 100);
+        document.getElementById('poll-progress').style.width = pct + '%';
+        if (elapsed >= UPDATE_MS) {
+            document.getElementById('poll-progress').style.transition = 'none';
+            document.getElementById('poll-progress').style.width = '0%';
+            setTimeout(() => document.getElementById('poll-progress').style.transition = 'width 0.1s linear', 50);
+            fetchHealth();
+            fetchTwins();
+        }
+    }, 100);
+
+    fetchHealth();
+    fetchTwins();
+</script>
 </body>
 </html>

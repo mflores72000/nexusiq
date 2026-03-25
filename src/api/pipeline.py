@@ -1,4 +1,5 @@
 import uuid
+import logging
 from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -7,8 +8,11 @@ from src.pipeline.ingest import run_ingestion
 from src.twins.twin_service import materialize_twins
 from src.correlations.engine import run_correlation_engine
 
+logger = logging.getLogger(__name__)
+
 router_correlations = APIRouter(prefix="/correlations", tags=["Correlations"])
 router_pipeline = APIRouter(prefix="/pipeline", tags=["Pipeline"])
+router_admin = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router_correlations.get("/")
@@ -41,7 +45,6 @@ def trigger_pipeline(background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
 
     def _run():
-        import logging
         log = logging.getLogger(__name__)
         try:
             run_ingestion()
@@ -56,3 +59,18 @@ def trigger_pipeline(background_tasks: BackgroundTasks):
 
     background_tasks.add_task(_run)
     return {"job_id": job_id, "status": "started", "message": "Ver progreso en GET /events?domain=SYSTEM"}
+
+
+@router_admin.delete("/reset")
+def reset_database(db: Session = Depends(get_db)):
+    """⚠️ Elimina TODOS los eventos. Útil para demos. Reseta el sistema a cero."""
+    count = db.execute(text("SELECT COUNT(*) FROM events")).scalar() or 0
+    db.execute(text("DELETE FROM events"))
+    db.commit()
+    logger.warning("🗑️  RESET: Se eliminaron %d eventos de la BD.", count)
+    return {
+        "status": "reset_ok",
+        "deleted_events": count,
+        "message": f"Se eliminaron {count} eventos. Ejecuta POST /pipeline/run para reingestar.",
+    }
+

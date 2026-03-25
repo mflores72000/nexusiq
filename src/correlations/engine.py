@@ -93,7 +93,14 @@ def run_correlation_engine(db: Session | None = None) -> list[dict[str, Any]]:
             logger.warning("No hay eventos SOURCE. Ejecutar ingesta primero.")
             return []
 
-        logger.info("Datos cargados: %d filas", len(df))
+        logger.info("=" * 70)
+        logger.info("🔗 MOTOR DE CORRELACIONES INICIADO")
+        logger.info("   Fuente: event log (domain=SOURCE) — %d filas", len(df))
+        logger.info("   Variables analizadas: %d → %d pares posibles",
+                    len(NUMERIC_COLS), len(NUMERIC_COLS) * (len(NUMERIC_COLS) - 1) // 2)
+        logger.info("   Umbral Pearson |r| >= %.2f  |  p_ajustado < %.2f (Bonferroni)",
+                    CORR_THRESHOLD, P_THRESHOLD)
+        logger.info("=" * 70)
 
         detrended = {col: _detrend_series(df[col]) for col in NUMERIC_COLS if col in df.columns}
 
@@ -107,6 +114,7 @@ def run_correlation_engine(db: Session | None = None) -> list[dict[str, Any]]:
             s1, s2 = s1[common_idx], s2[common_idx]
 
             if len(s1) < 30:
+                logger.debug("   ⏭ Par (%s, %s): muestras insuficientes (%d)", var1, var2, len(s1))
                 continue
 
             pearson_r, pearson_p = scipy_stats.pearsonr(s1, s2)
@@ -128,12 +136,16 @@ def run_correlation_engine(db: Session | None = None) -> list[dict[str, Any]]:
                 is_spurious = False
                 detrended_r = pearson_r
 
+            logger.info("   📐 (%s) ↔ (%s)", var1[:20], var2[:20])
+            logger.info("      Pearson r=%.3f  Spearman ρ=%.3f  MI=%.3f  p_raw=%.4e  n=%d",
+                        pearson_r, spearman_r, mi, pearson_p, len(s1))
+
             p_values_raw.append(pearson_p)
             pair_stats.append({
                 "var1": var1, "var2": var2,
                 "pearson_r": float(pearson_r), "pearson_p": float(pearson_p),
                 "spearman_r": float(spearman_r), "mi": float(mi),
-                "is_spurious": is_spurious, "detrended_r": float(detrended_r),
+                "is_spurious": bool(is_spurious), "detrended_r": float(detrended_r),
                 "n_samples": len(s1),
             })
 
@@ -143,10 +155,21 @@ def run_correlation_engine(db: Session | None = None) -> list[dict[str, Any]]:
         n_tests = len(p_values_raw)
         adjusted_p_values = [min(p * n_tests, 1.0) for p in p_values_raw]
 
+        logger.info("")
+        logger.info("📊 BONFERRONI — %d tests → multiplicar p × %d", n_tests, n_tests)
+        logger.info("   Filtrando pares con |r| >= %.2f Y p_ajustado < %.2f ...", CORR_THRESHOLD, P_THRESHOLD)
+
         now = datetime.now(timezone.utc)
         for stat, p_adj in zip(pair_stats, adjusted_p_values):
             stat["p_adjusted"] = p_adj
-            if abs(stat["pearson_r"]) >= CORR_THRESHOLD and p_adj < P_THRESHOLD:
+            passes = abs(stat["pearson_r"]) >= CORR_THRESHOLD and p_adj < P_THRESHOLD
+            spurious_tag = " ⚠ ESPURIA (desaparece al detrend)" if stat["is_spurious"] else ""
+            status = "✅ SIGNIFICATIVA" if passes else "❌ rechazada"
+            logger.info("   %s  %s ↔ %s  |r|=%.3f  p_adj=%.4f%s",
+                        status, stat["var1"][:18], stat["var2"][:18],
+                        abs(stat["pearson_r"]), p_adj, spurious_tag)
+
+            if passes:
                 stat["narrative"] = _generate_narrative(
                     stat["var1"], stat["var2"], stat["pearson_r"],
                     stat["spearman_r"], stat["mi"], p_adj, stat["is_spurious"],
@@ -164,7 +187,16 @@ def run_correlation_engine(db: Session | None = None) -> list[dict[str, Any]]:
                 results.append(stat)
 
         db.commit()
-        logger.info("✅ %d correlaciones guardadas en el log.", len(results))
+
+        logger.info("")
+        logger.info("=" * 70)
+        logger.info("✅ CORRELACIONES GUARDADAS: %d / %d pares evaluados", len(results), len(pair_stats))
+        for r in results:
+            direction = "↑↑" if r["pearson_r"] > 0 else "↑↓"
+            logger.info("   %s  %s  ↔  %s", direction, r["var1"], r["var2"])
+            logger.info("      Pearson r=%.4f | Spearman ρ=%.4f | MI=%.4f | p_adj=%.6f | espuria=%s",
+                        r["pearson_r"], r["spearman_r"], r["mi"], r["p_adjusted"], r["is_spurious"])
+        logger.info("=" * 70)
 
     except Exception as exc:
         logger.exception("Error en correlation engine: %s", exc)
@@ -175,3 +207,5 @@ def run_correlation_engine(db: Session | None = None) -> list[dict[str, Any]]:
             db.close()
 
     return results
+
+
